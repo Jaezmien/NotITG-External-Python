@@ -77,13 +77,13 @@ class NotITG:
 	def GetExternal( self, index = 0 ):
 		if not self._handler.exists(): return -1
 		MAX_INDEX = self._handler.get_flag_max_index()
-		if index < 0 or index >= MAX_INDEX: raise Exception( 'Index is outside range! [0-{}]'.format(MAX_INDEX-1) )
+		if index < 0 or index >= MAX_INDEX: raise NotITGError( 'Index is outside range! [0-{}]'.format(MAX_INDEX-1) )
 		return self._handler.read( index )
 
 	def SetExternal( self, index = 0, flag = 0 ):
 		if not self._handler.exists(): return
 		MAX_INDEX = self._handler.get_flag_max_index()
-		if index < 0 or index >= MAX_INDEX: raise Exception( 'Index is outside range! [0-{}]'.format(MAX_INDEX-1) )
+		if index < 0 or index >= MAX_INDEX: raise NotITGError( 'Index is outside range! [0-{}]'.format(MAX_INDEX-1) )
 		self._handler.write( index, flag )
 
 	def Heartbeat( self ):
