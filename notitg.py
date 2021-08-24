@@ -70,25 +70,26 @@ class NotITGError(Exception):
 
 class NotITG:
 	def __init__( self ):
-		self._handler = _NotITGWindowsHandler() if _IS_WINDOWS else _NotITGLinuxHandler();
+		self._handler = _NotITGWindowsHandler() if _IS_WINDOWS else _NotITGLinuxHandler()
 
-	def Scan( self, deep = False ):
-		return self._handler.scan( deep );
+	def Scan( self, deep = False ): return self._handler.scan( deep )
 
 	def GetExternal( self, index = 0 ):
-		if not self._handler.exists(): return -1;
+		if not self._handler.exists(): return -1
 		MAX_INDEX = self._handler.get_flag_max_index()
 		if index < 0 or index >= MAX_INDEX: raise Exception( 'Index is outside range! [0-{}]'.format(MAX_INDEX-1) )
-		return self._handler.read( index );
+		return self._handler.read( index )
 
 	def SetExternal( self, index = 0, flag = 0 ):
-		if not self._handler.exists(): return;
+		if not self._handler.exists(): return
 		MAX_INDEX = self._handler.get_flag_max_index()
 		if index < 0 or index >= MAX_INDEX: raise Exception( 'Index is outside range! [0-{}]'.format(MAX_INDEX-1) )
-		self._handler.write( index, flag );
+		self._handler.write( index, flag )
 
 	def Heartbeat( self ):
-		if not self._handler.exists(): return False;
+		if not self._handler.exists():
+			self._handler.reset()
+			return False
 		return any( process == self._handler.process_id for process in ps.process_iter() )
 
 # Handler
@@ -99,8 +100,9 @@ class _NotITGHandler:
 		self.process_id = None
 		self.version = None
 
-	def exists( self ): return self.process_id != None;
-	def get_version_details( self ): return _NOTITG_VERSIONS[ self.version ];
+	def exists( self ): return self.process_id != None
+	def reset( self ): self.process_id = None
+	def get_version_details( self ): return _NOTITG_VERSIONS[ self.version ]
 	def get_flag_max_index( self ): return self.get_version_details()[ 'Size' ]
 
 class _NotITGWindowsHandler( _NotITGHandler ):
