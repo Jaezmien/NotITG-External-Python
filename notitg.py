@@ -87,10 +87,10 @@ class NotITG:
 		self._handler.write( index, flag )
 
 	def Heartbeat( self ):
-		if not self._handler.exists():
-			self._handler.reset()
-			return False
-		return any( process.pid == self._handler.process_id for process in ps.process_iter() )
+		if not self._handler.exists(): return False
+		STATE = any( process.pid == self._handler.process_id for process in ps.process_iter() )
+		if STATE == False: self._handler.reset()
+		return STATE
 
 # Handler
 # TODO: Throw an error instead when there's a permission/access error.
