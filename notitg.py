@@ -90,7 +90,7 @@ class NotITG:
 		if not self._handler.exists():
 			self._handler.reset()
 			return False
-		return any( process == self._handler.process_id for process in ps.process_iter() )
+		return any( process.pid == self._handler.process_id for process in ps.process_iter() )
 
 # Handler
 # TODO: Throw an error instead when there's a permission/access error.
