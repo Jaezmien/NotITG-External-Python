@@ -166,7 +166,7 @@ class _NotITGLinuxHandler( _NotITGHandler ):
 
 	class iovec(ct.Structure): _fields_ = [("iov_base",ct.c_void_p),("iov_len",ct.c_size_t)]
 
-	def _create_iovecs( BUFFER, ADDRESS ):
+	def _create_iovecs( self, BUFFER, ADDRESS ):
 		LOCAL, REMOTE = self.iovec(), self.iovec()
 		SIZEOF = ct.sizeof( BUFFER )
 		LOCAL.iov_base = ct.cast( ct.byref(BUFFER), ct.c_void_p )
@@ -191,7 +191,7 @@ class _NotITGLinuxHandler( _NotITGHandler ):
 		# Check if we can access the process
 		def check(pid, address):
 			BUFFER = ct.c_int()
-			LOCAL, REMOTE = this._create_iovecs( BUFFER, address )
+			LOCAL, REMOTE = self._create_iovecs( BUFFER, address )
 			return self.vm_read( pid, LOCAL, 1, REMOTE, 1, 0 ) >= 0
 
 		for proc in ps.process_iter():
@@ -201,7 +201,7 @@ class _NotITGLinuxHandler( _NotITGHandler ):
 						if errno.errorcode[ ct.get_errno() ] == "EPERM": raise NotITGError("Cannot access process! Try running the script again with sudo privileges.")
 						else: continue
 					BUFFER = ct.create_string_buffer(8)
-					LOCAL, REMOTE = this._create_iovecs( BUFFER, self.get_version_details()['BuildAddress'] )
+					LOCAL, REMOTE = self._create_iovecs( BUFFER, self.get_version_details()['BuildAddress'] )
 					self.vm_read( proc.pid, LOCAL, 1, REMOTE, 1, 0 )
 					if BUFFER.value.decode() == str(addresses['BuildDate']):
 						self.process_id = proc.pid
@@ -221,12 +221,12 @@ class _NotITGLinuxHandler( _NotITGHandler ):
 
 	def read( self, index ):
 		BUFFER = ct.c_int()
-		LOCAL, REMOTE = this._create_iovecs( BUFFER, self.get_version_details()['Address'] + (index*4) )
+		LOCAL, REMOTE = self._create_iovecs( BUFFER, self.get_version_details()['Address'] + (index*4) )
 		BYTES_READ = self.vm_read( self.process_id, LOCAL, 1, REMOTE, 1, 0 )
 		if BYTES_READ < 0: raise NotITGError( errno.errorcode[ ct.get_errno() ] )
 		return BUFFER.value
 
 	def write( self, index, flag ):
-		LOCAL, REMOTE = this._create_iovecs( ct.c_int( flag ), self.get_version_details()['Address'] + (index*4) )
+		LOCAL, REMOTE = self._create_iovecs( ct.c_int( flag ), self.get_version_details()['Address'] + (index*4) )
 		BYTES_WRITTEN = self.vm_write( self.process_id, LOCAL, 1, REMOTE, 1, 0 )
 		if BYTES_WRITTEN < 0: raise NotITGError( errno.errorcode[ ct.get_errno() ] )
