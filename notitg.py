@@ -166,6 +166,15 @@ class _NotITGLinuxHandler( _NotITGHandler ):
 
 	class iovec(ct.Structure): _fields_ = [("iov_base",ct.c_void_p),("iov_len",ct.c_size_t)]
 
+	def _create_iovecs( self, BUFFER, ADDRESS ):
+		LOCAL, REMOTE = self.iovec(), self.iovec()
+		SIZEOF = ct.sizeof( BUFFER )
+		LOCAL.iov_base = ct.cast( ct.byref(BUFFER), ct.c_void_p )
+		LOCAL.iov_len = SIZEOF
+		REMOTE.iov_base = ct.c_void_p( ADDRESS )
+		REMOTE.iov_len = SIZEOF
+		return LOCAL, REMOTE
+
 	def __init__( self ):
 		super().__init__();
 		LIBC = ct.CDLL("libc.so.6", use_errno=True)
@@ -181,15 +190,9 @@ class _NotITGLinuxHandler( _NotITGHandler ):
 	def scan( self, deep ):
 		# Check if we can access the process
 		def check(pid, address):
-			LOCAL, REMOTE = self.iovec(), self.iovec()
 			BUFFER = ct.c_int()
-			SIZEOF = ct.sizeof( BUFFER )
-			LOCAL.iov_base = ct.cast( ct.byref(BUFFER), ct.c_void_p )
-			LOCAL.iov_len = SIZEOF
-			REMOTE.iov_base = ct.c_void_p( address )
-			REMOTE.iov_len = SIZEOF
-			BYTES_READ = self.vm_read( pid, LOCAL, 1, REMOTE, 1, 0 )
-			return BYTES_READ >= 0
+			LOCAL, REMOTE = self._create_iovecs( BUFFER, address )
+			return self.vm_read( pid, LOCAL, 1, REMOTE, 1, 0 ) >= 0
 
 		for proc in ps.process_iter():
 			if deep:
@@ -197,13 +200,8 @@ class _NotITGLinuxHandler( _NotITGHandler ):
 					if not check(proc.pid, _NOTITG_VERSIONS[ver]['Address']):
 						if errno.errorcode[ ct.get_errno() ] == "EPERM": raise NotITGError("Cannot access process! Try running the script again with sudo privileges.")
 						else: continue
-					LOCAL, REMOTE = self.iovec(), self.iovec()
 					BUFFER = ct.create_string_buffer(8)
-					SIZEOF = ct.sizeof( BUFFER )
-					LOCAL.iov_base = ct.cast( ct.byref(BUFFER), ct.c_void_p )
-					LOCAL.iov_len = SIZEOF
-					REMOTE.iov_base = ct.c_void_p( self.get_version_details()['BuildAddress'] )
-					REMOTE.iov_len = SIZEOF
+					LOCAL, REMOTE = self._create_iovecs( BUFFER, self.get_version_details()['BuildAddress'] )
 					self.vm_read( proc.pid, LOCAL, 1, REMOTE, 1, 0 )
 					if BUFFER.value.decode() == str(addresses['BuildDate']):
 						self.process_id = proc.pid
@@ -222,24 +220,13 @@ class _NotITGLinuxHandler( _NotITGHandler ):
 		return False
 
 	def read( self, index ):
-		LOCAL, REMOTE = self.iovec(), self.iovec()
 		BUFFER = ct.c_int()
-		SIZEOF = ct.sizeof( BUFFER )
-		LOCAL.iov_base = ct.cast( ct.byref(BUFFER), ct.c_void_p )
-		LOCAL.iov_len = SIZEOF
-		REMOTE.iov_base = ct.c_void_p( self.get_version_details()['Address'] + (index*4) )
-		REMOTE.iov_len = SIZEOF
+		LOCAL, REMOTE = self._create_iovecs( BUFFER, self.get_version_details()['Address'] + (index*4) )
 		BYTES_READ = self.vm_read( self.process_id, LOCAL, 1, REMOTE, 1, 0 )
 		if BYTES_READ < 0: raise NotITGError( errno.errorcode[ ct.get_errno() ] )
 		return BUFFER.value
 
 	def write( self, index, flag ):
-		LOCAL, REMOTE = self.iovec(), self.iovec()
-		BUFFER = ct.c_int( flag )
-		SIZEOF = ct.sizeof( BUFFER )
-		LOCAL.iov_base = ct.cast( ct.byref(BUFFER), ct.c_void_p )
-		LOCAL.iov_len = SIZEOF
-		REMOTE.iov_base = ct.c_void_p( self.get_version_details()['Address'] + (index*4) )
-		REMOTE.iov_len = SIZEOF
+		LOCAL, REMOTE = self._create_iovecs( ct.c_int( flag ), self.get_version_details()['Address'] + (index*4) )
 		BYTES_WRITTEN = self.vm_write( self.process_id, LOCAL, 1, REMOTE, 1, 0 )
 		if BYTES_WRITTEN < 0: raise NotITGError( errno.errorcode[ ct.get_errno() ] )
