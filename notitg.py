@@ -147,7 +147,7 @@ class _NotITGWindowsHandler( _NotITGHandler ):
 							self.k32 = kProcess
 							self.process_id = proc.pid
 							self.version = ver
-							return 
+							return True
 				else:
 					for ver, file_name in _NOTITG_FILENAMES.items():    
 						if proc.name().lower() == file_name.lower():
