@@ -97,7 +97,7 @@ class NotITG:
 
 	def Heartbeat( self ):
 		if not self._handler.exists(): return False
-		STATE = any( process.pid == self._handler.process_id for process in ps.process_iter() )
+		STATE = ps.pid_exists( self._handler.process_id )
 		if STATE == False: self._handler.reset()
 		return STATE
 
