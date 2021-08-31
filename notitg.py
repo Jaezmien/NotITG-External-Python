@@ -72,6 +72,15 @@ class NotITG:
 	def __init__( self ):
 		self._handler = _NotITGWindowsHandler() if _IS_WINDOWS else _NotITGLinuxHandler()
 
+	def IsWindows( self ): return _IS_WINDOWS
+
+	def GetDetails( self ):
+		if not self._handler.exists(): return None
+		return {
+			"Version": self._handler.version,
+			"BuildDate": _NOTITG_VERSIONS[ self._handler.version ][ "BuildDate" ]
+		}
+
 	def Scan( self, deep = False ): return self._handler.scan( deep )
 
 	def GetExternal( self, index = 0 ):
