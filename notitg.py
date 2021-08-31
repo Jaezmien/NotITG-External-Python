@@ -81,6 +81,10 @@ class NotITG:
 			"BuildDate": _NOTITG_VERSIONS[ self._handler.version ][ "BuildDate" ]
 		}
 
+	def Disconnect( self ):
+		if not self._handler.exists(): return
+		self._handler.reset()
+
 	def Scan( self, deep = False ): return self._handler.scan( deep )
 
 	def GetExternal( self, index = 0 ):
