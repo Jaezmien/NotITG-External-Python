@@ -135,7 +135,7 @@ class _NotITGWindowsHandler( _NotITGHandler ):
 		self.k32 = None
 
 	def scan( self, deep ):
-		for proc in ps.process_iter():
+		for proc in ps.process_iter(['pid']):
 			try:
 				kProcess = self.OpenProcess(0x10 | 0x20 | 0x8, False, proc.pid)
 				if deep:
