@@ -147,11 +147,13 @@ class _NotITGWindowsHandler( _NotITGHandler ):
 						STR_LEN = 8
 						DATA = ct.create_string_buffer(STR_LEN)
 						self.ReadProcessMemory(kProcess, addresses['BuildAddress'], ct.byref(DATA), STR_LEN, ct.byref(ct.c_size_t()))
-						if DATA.value.decode() == str(addresses['BuildDate']):
-							self.k32 = kProcess
-							self.process_id = proc.pid
-							self.version = ver
-							return True
+						try:
+							if DATA.value.decode() == str(addresses['BuildDate']):
+								self.k32 = kProcess
+								self.process_id = proc.pid
+								self.version = ver
+								return True
+						except: pass
 				else:
 					for ver, file_name in _NOTITG_FILENAMES.items():    
 						if proc.name().lower() == file_name.lower():
@@ -216,10 +218,12 @@ class _NotITGLinuxHandler( _NotITGHandler ):
 					BUFFER = ct.create_string_buffer(8)
 					LOCAL, REMOTE = self._create_iovecs( BUFFER, self.get_version_details()['BuildAddress'] )
 					self.vm_read( proc.pid, LOCAL, 1, REMOTE, 1, 0 )
-					if BUFFER.value.decode() == str(addresses['BuildDate']):
-						self.process_id = proc.pid
-						self.version = ver
-						return True
+					try:
+						if BUFFER.value.decode() == str(addresses['BuildDate']):
+							self.process_id = proc.pid
+							self.version = ver
+							return True
+					except: pass
 			else:
 				for ver, file_name in _NOTITG_FILENAMES.items():
 					if not check(proc.pid, _NOTITG_VERSIONS[ver]['Address']):
