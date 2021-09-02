@@ -78,7 +78,8 @@ class NotITG:
 		if not self._handler.exists(): return None
 		return {
 			"Version": self._handler.version,
-			"BuildDate": _NOTITG_VERSIONS[ self._handler.version ][ "BuildDate" ]
+			"BuildDate": _NOTITG_VERSIONS[ self._handler.version ][ "BuildDate" ],
+			"Process": self._handler.process
 		}
 
 	def Disconnect( self ):
@@ -112,6 +113,7 @@ class _NotITGHandler:
 	def __init__( self ):
 		self.process_id = None
 		self.version = None
+		self.process = None
 
 	def exists( self ): return self.process_id != None
 	def reset( self ): self.process_id = None
@@ -151,6 +153,7 @@ class _NotITGWindowsHandler( _NotITGHandler ):
 							if DATA.value.decode() == str(addresses['BuildDate']):
 								self.k32 = kProcess
 								self.process_id = proc.pid
+								self.process = proc
 								self.version = ver
 								return True
 						except: pass
@@ -159,6 +162,7 @@ class _NotITGWindowsHandler( _NotITGHandler ):
 						if proc.name().lower() == file_name.lower():
 							self.k32 = kProcess
 							self.process_id = proc.pid
+							self.process = proc
 							self.version = ver
 							return True
 			except (ps.NoSuchProcess, ps.AccessDenied, ps.ZombieProcess):
@@ -221,6 +225,7 @@ class _NotITGLinuxHandler( _NotITGHandler ):
 					try:
 						if BUFFER.value.decode() == str(addresses['BuildDate']):
 							self.process_id = proc.pid
+							self.process = proc
 							self.version = ver
 							return True
 					except: pass
@@ -231,6 +236,7 @@ class _NotITGLinuxHandler( _NotITGHandler ):
 						else: continue
 					if proc.name().lower() == file_name.lower():
 						self.process_id = proc.pid
+						self.process = proc
 						self.version = ver
 						return True
 
