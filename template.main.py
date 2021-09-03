@@ -1,6 +1,7 @@
 import argparse
 parser = argparse.ArgumentParser( description='Settings' )
 parser.add_argument("--unknown", "-U", dest="unknown", action="store_true", help="scans all processes instead of only relying on the filename")
+parser.add_argument("--pid", dest="pid", action="store", type=int, help="get a specific NotITG process from id")
 args = parser.parse_args()
 
 # Program ID
@@ -78,7 +79,7 @@ def tick_notitg():
 	if not NotITG.Heartbeat():
 		global _heartbeat_status
 
-		if NotITG.Scan( args.unknown ):
+		if (args.pid and NotITG.FromProcessId(args.pid)) or NotITG.Scan( args.unknown ):
 			if NotITG.GetDetails()[ "Version" ] in ["V1", "V2"]:
 				print("⚠ Unsupported NotITG version! Expected V3 or higher, got " + NotITG.GetDetails()[ "Version" ])
 				NotITG.Disconnect()

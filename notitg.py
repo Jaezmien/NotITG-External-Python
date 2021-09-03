@@ -87,6 +87,7 @@ class NotITG:
 		self._handler.reset()
 
 	def Scan( self, deep = False ): return self._handler.scan( deep )
+	def FromProcessId( self, id ): return self._handler.fromProcessId( id )
 
 	def GetExternal( self, index = 0 ):
 		if not self._handler.exists(): return -1
@@ -170,6 +171,25 @@ class _NotITGWindowsHandler( _NotITGHandler ):
 
 		return False
 
+	def fromProcessId( self, id: int ):
+		for proc in ps.process_iter(['pid']):
+			if proc.pid == id:
+				kProcess = self.OpenProcess(0x10 | 0x20 | 0x8, False, proc.pid)
+				for ver,addresses in _NOTITG_VERSIONS.items():
+					STR_LEN = 8
+					DATA = ct.create_string_buffer(STR_LEN)
+					self.ReadProcessMemory(kProcess, addresses['BuildAddress'], ct.byref(DATA), STR_LEN, ct.byref(ct.c_size_t()))
+					try:
+						if DATA.value.decode() == str(addresses['BuildDate']):
+							self.k32 = kProcess
+							self.process_id = proc.pid
+							self.process = proc
+							self.version = ver
+							return True
+					except: pass
+
+		return False
+
 	def read( self, index ):
 		DATA = ct.c_int()
 		BYTES_READ = ct.c_size_t()
@@ -206,17 +226,18 @@ class _NotITGLinuxHandler( _NotITGHandler ):
 		self.vm_read = vm_read
 		self.vm_write = vm_write
 
+	# Check if we can access the process
+	def _check( self, pid, address ):
+		BUFFER = ct.c_int()
+		LOCAL, REMOTE = self._create_iovecs( BUFFER, address )
+		return self.vm_read( pid, LOCAL, 1, REMOTE, 1, 0 ) >= 0
+
 	def scan( self, deep ):
-		# Check if we can access the process
-		def check(pid, address):
-			BUFFER = ct.c_int()
-			LOCAL, REMOTE = self._create_iovecs( BUFFER, address )
-			return self.vm_read( pid, LOCAL, 1, REMOTE, 1, 0 ) >= 0
 
 		for proc in ps.process_iter():
 			if deep:
 				for ver,addresses in _NOTITG_VERSIONS.items():
-					if not check(proc.pid, _NOTITG_VERSIONS[ver]['Address']):
+					if not self._check(proc.pid, _NOTITG_VERSIONS[ver]['Address']):
 						if errno.errorcode[ ct.get_errno() ] == "EPERM": raise NotITGError("Cannot access process! Try running the script again with sudo privileges.")
 						else: continue
 					BUFFER = ct.create_string_buffer(8)
@@ -231,7 +252,7 @@ class _NotITGLinuxHandler( _NotITGHandler ):
 					except: pass
 			else:
 				for ver, file_name in _NOTITG_FILENAMES.items():
-					if not check(proc.pid, _NOTITG_VERSIONS[ver]['Address']):
+					if not self._check(proc.pid, _NOTITG_VERSIONS[ver]['Address']):
 						if errno.errorcode[ ct.get_errno() ] == "EPERM": raise NotITGError("Cannot access process! Try running the script again with sudo privileges.")
 						else: continue
 					if proc.name().lower() == file_name.lower():
@@ -239,6 +260,26 @@ class _NotITGLinuxHandler( _NotITGHandler ):
 						self.process = proc
 						self.version = ver
 						return True
+
+		return False
+
+	def fromProcessId( self, id: int ):
+		for proc in ps.process_iter(['pid']):
+			if proc.pid == id:
+				for ver,addresses in _NOTITG_VERSIONS.items():
+					if not self._check(proc.pid, _NOTITG_VERSIONS[ver]['Address']):
+						if errno.errorcode[ ct.get_errno() ] == "EPERM": raise NotITGError("Cannot access process! Try running the script again with sudo privileges.")
+						else: continue
+					BUFFER = ct.create_string_buffer(8)
+					LOCAL, REMOTE = self._create_iovecs( BUFFER, self.get_version_details()['BuildAddress'] )
+					self.vm_read( proc.pid, LOCAL, 1, REMOTE, 1, 0 )
+					try:
+						if BUFFER.value.decode() == str(addresses['BuildDate']):
+							self.process_id = proc.pid
+							self.process = proc
+							self.version = ver
+							return True
+					except: pass
 
 		return False
 
