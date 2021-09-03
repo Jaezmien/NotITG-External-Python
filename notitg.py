@@ -86,16 +86,16 @@ class NotITG:
 		if not self._handler.exists(): return
 		self._handler.reset()
 
-	def Scan( self, deep = False ): return self._handler.scan( deep )
-	def FromProcessId( self, id ): return self._handler.fromProcessId( id )
+	def Scan( self, deep : bool = False ): return self._handler.scan( deep )
+	def FromProcessId( self, id : int ): return self._handler.fromProcessId( id )
 
-	def GetExternal( self, index = 0 ):
+	def GetExternal( self, index : int = 0 ):
 		if not self._handler.exists(): return -1
 		MAX_INDEX = self._handler.get_flag_max_index()
 		if index < 0 or index >= MAX_INDEX: raise NotITGError( 'Index is outside range! [0-{}]'.format(MAX_INDEX-1) )
 		return self._handler.read( index )
 
-	def SetExternal( self, index = 0, flag = 0 ):
+	def SetExternal( self, index : int = 0, flag : int = 0 ):
 		if not self._handler.exists(): return
 		MAX_INDEX = self._handler.get_flag_max_index()
 		if index < 0 or index >= MAX_INDEX: raise NotITGError( 'Index is outside range! [0-{}]'.format(MAX_INDEX-1) )
