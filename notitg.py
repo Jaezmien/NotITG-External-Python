@@ -51,6 +51,18 @@ _NOTITG_VERSIONS = {
 		"Address": 0x008BFF38,
 		"BuildDate": 20210420,
 		"Size": 256
+	},
+	"V4.9": {
+		"BuildAddress": 0x0019EBE0,
+		"Address": 0x00AA6D78,
+		"BuildDate": 20240917,
+		"Size": 256
+	},
+	"V4.9.1": {
+		"BuildAddress": 0x0019EBE0,
+		"Address": 0x00AA6D98,
+		"BuildDate": 20241010,
+		"Size": 256
 	}
 }
 _NOTITG_FILENAMES = {
@@ -61,6 +73,8 @@ _NOTITG_FILENAMES = {
 	"V4"    : "NotITG-V4.exe",
 	"V4.0.1": "NotITG-V4.0.1.exe",
 	"V4.2"  : "NotITG-V4.2.0.exe",
+	"V4.9"  : "NotITG-V4.9.exe",
+	"V4.9.1": "NotITG-V4.9.1.exe",
 }
 
 class NotITGError(Exception):
